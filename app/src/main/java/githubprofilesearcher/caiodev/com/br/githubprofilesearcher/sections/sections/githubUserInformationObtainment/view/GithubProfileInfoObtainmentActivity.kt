@@ -30,11 +30,13 @@ import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils
 import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils.constants.Constants.unknownHostException
 import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils.constants.Constants.wifi
 import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils.customViews.snackBar.CustomSnackBar
+import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils.delay.Delay.delay
 import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils.extensions.*
 import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils.interfaces.OnItemClicked
 import githubprofilesearcher.caiodev.com.br.githubprofilesearcher.sections.utils.network.NetworkChecking
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.offline_layout.view.*
+import kotlinx.serialization.UnstableDefault
 
 class GithubProfileInfoObtainmentActivity :
     AppCompatActivity(R.layout.activity_main),
@@ -54,6 +56,7 @@ class GithubProfileInfoObtainmentActivity :
         ).get(GithubProfileInfoObtainmentViewModel::class.java)
     }
 
+    @UnstableDefault
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupView()
@@ -61,6 +64,7 @@ class GithubProfileInfoObtainmentActivity :
         setupExtras()
     }
 
+    @UnstableDefault
     override fun setupView() {
 
         //Condition when users rotate the screen and the activity gets destroyed
@@ -266,6 +270,7 @@ class GithubProfileInfoObtainmentActivity :
         setupInternetConnectionObserver()
     }
 
+    @UnstableDefault
     private fun searchProfile(
         isFieldEmpty: Boolean? = null,
         shouldListItemsBeRemoved: Boolean? = null
@@ -322,6 +327,12 @@ class GithubProfileInfoObtainmentActivity :
                 R.anim.layout_animation_fall_down
             )
             adapter?.notifyDataSetChanged()
+
+            // For some reason, when a call that removes all previous items from the result list is made
+            // (e.g: Pull-to-refresh or by clicking on the search icon), if one scrolled till some point of the list,
+            // when the call is finished, the top of the list is not shown, which should happen. So a temporary solution
+            // until i figure out what is going on is to go back to the top after any successful call that is required to
+            // remove all previous list items so pagination call will not be affected by this
             scrollToPosition(0, false)
             scheduleLayoutAnimation()
 
@@ -380,26 +391,29 @@ class GithubProfileInfoObtainmentActivity :
 
     private fun showInternetConnectionStatusSnackBar(isInternetConnectionAvailable: Boolean) {
         with(customSnackBar) {
-            if (isInternetConnectionAvailable) {
-                this?.setText(getString(R.string.back_online_success_message))?.setBackgroundColor(
-                    ContextCompat.getColor(
-                        applicationContext,
-                        R.color.green_700
+            this?.let {
+                if (isInternetConnectionAvailable) {
+                    setText(getString(R.string.back_online_success_message)).setBackgroundColor(
+                        ContextCompat.getColor(
+                            applicationContext,
+                            R.color.green_700
+                        )
                     )
-                )
-                this?.dismiss()
-            } else {
-                this?.setText(getString(R.string.no_connection_error))?.setBackgroundColor(
-                    ContextCompat.getColor(
-                        applicationContext,
-                        R.color.red_700
+                    delay(3000, action = { this.dismiss() })
+                } else {
+                    setText(getString(R.string.no_connection_error)).setBackgroundColor(
+                        ContextCompat.getColor(
+                            applicationContext,
+                            R.color.red_700
+                        )
                     )
-                )
-                this?.show()
+                    this.show()
+                }
             }
         }
     }
 
+    @UnstableDefault
     private fun handleActionIconClick() {
         hasUserRequestedAnotherResultPage = false
         if (offlineLayout.visibility == VISIBLE) applyViewVisibility(
@@ -421,6 +435,7 @@ class GithubProfileInfoObtainmentActivity :
         }
     }
 
+    @UnstableDefault
     private fun setupTextInputEditText() {
         hasUserRequestedAnotherResultPage = false
         with(searchProfileTextInputEditText) {
@@ -449,6 +464,7 @@ class GithubProfileInfoObtainmentActivity :
         }
     }
 
+    @UnstableDefault
     private fun setupRecyclerViewAddOnScrollListener() {
         profileInfoRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
